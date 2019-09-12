@@ -64,5 +64,19 @@ apply_mc(){
   done
 }
 
+function create_ntp_config(){
+  if [ "${NTP_SERVERS}" ]; then
+    cp assets/post-install/99_worker-chronyd-custom.yaml{.optional,}
+    cp assets/post-install/99_master-chronyd-custom.yaml{.optional,}
+    NTPFILECONTENT=$(cat assets/files/etc/chrony.conf)
+    for ntp in $(echo ${NTP_SERVERS} | tr ";" "\n"); do
+      NTPFILECONTENT="${NTPFILECONTENT}"$'\n'"pool ${ntp} iburst"
+    done
+    NTPFILECONTENT=$(echo "${NTPFILECONTENT}" | base64 -w0)
+    sed -i -e "s/NTPFILECONTENT/${NTPFILECONTENT}/g" assets/deploy/*-chronyd-custom.yaml
+  fi
+}
+
 create_bridge
+create_ntp_config
 apply_mc
